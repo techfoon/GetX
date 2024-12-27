@@ -1,4 +1,4 @@
-
+/*
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_getx/controllers/countercontroller.dart';
@@ -33,3 +33,4 @@ class MyHomePage extends StatelessWidget {
     );
   }
 }
+*/
