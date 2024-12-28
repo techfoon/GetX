@@ -1,6 +1,10 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:my_getx/Models/notesmodel.dart';
+import 'package:my_getx/controllers/databasecontroller.dart';
 import 'package:my_getx/data/local/db_helper.dart';
 
 void main() {
@@ -10,7 +14,7 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       home: MyAppDash(),
     );
   }
@@ -29,53 +33,58 @@ class _MyAppDashState extends State<MyAppDash> {
   TextEditingController updateDescriptionController = TextEditingController();
   List<NotesModel> allNotes = [];
 
+  final Databasecontroller databaseController = Get.put(Databasecontroller());
+
   DBHelper? mainDB;
 
   @override
   void initState() {
     super.initState();
-    mainDB = DBHelper.getInstance;
+    // mainDB = DBHelper.getInstance;
     getInitialNotes();
   }
 
   getInitialNotes() async {
-    allNotes = await mainDB!.getAllNotes();
-    setState(() {});
+    databaseController.fetchNotes();
+    log("GetInitial Fuction is Called ");
   }
 
   @override
   Widget build(BuildContext context) {
+    log("build Contactax called");
     return Scaffold(
       appBar: AppBar(
         title: Text("App#1"),
       ),
-      body: allNotes.isNotEmpty
+      body: Obx(() => databaseController.notes.isNotEmpty
           ? ListView.builder(
-              itemCount: allNotes.length,
+              itemCount: databaseController.notes.length,
               itemBuilder: (_, index) {
+                log("Only GETX  List View is called");
                 return ListTile(
                   leading: Text.rich(
                     TextSpan(
                         text:
-                            "Sn:${allNotes[index].s_n!.toString()}\n",
+                            "Sn:${databaseController.notes[index].s_n.toString() }\n",
                         children: [
                           TextSpan(text: "In:${index.toString()}"),
                         ]),
                   ),
                   trailing: IconButton(
                       onPressed: () {
-                        mainDB!.deleteNotes(
-                            rowIndex: allNotes[index].s_n!);
-                        getInitialNotes();
+                        databaseController.deleteNotes(
+                            rowindex: databaseController.notes[index].s_n!);
+                        /*  mainDB!.deleteNotes(
+                        rowIndex: databaseController.notes[index].s_n!);*/
                       },
                       icon: Icon(Icons.delete)),
-                  title: Text(allNotes[index].title),
-                  subtitle: Text(allNotes[index].description),
+                  title: Text(databaseController.notes[index].title),
+                  subtitle: Text(databaseController.notes[index].description),
                   onLongPress: () {
                     updateTitleController.text =
-                        allNotes[index].title;
-                        updateDescriptionController.text =
-                        allNotes[index].description;
+                        databaseController.notes[index].title;
+                    updateDescriptionController.text =
+                        databaseController.notes[index].description;
                     showModalBottomSheet(
                         context: context,
                         builder: (_) {
@@ -119,8 +128,7 @@ class _MyAppDashState extends State<MyAppDash> {
                                   OutlinedButton(
                                       onPressed: () {
                                         updateNotesInDB(
-                                            updateIndex: allNotes[index]
-                                                .s_n!);
+                                            updateIndex: databaseController.notes[index].s_n!);
                                         Navigator.pop(context);
                                       },
                                       child: Text("update")),
@@ -137,7 +145,7 @@ class _MyAppDashState extends State<MyAppDash> {
                   },
                 );
               })
-          : Text("no notes found"),
+          : Text("No notes found")),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showModalBottomSheet(
@@ -208,7 +216,11 @@ class _MyAppDashState extends State<MyAppDash> {
     var formTitle = titleController.text.toString();
     var formDescription = descriptionController.text.toString();
 
-    bool check = await mainDB!.addNote(newNote: NotesModel(title: formTitle, description: formDescription));
+    databaseController.addnotes(NotesModel(
+        title: formTitle, description: formDescription)); // using GetX
+
+    /* bool check = await mainDB!.addNote(
+        newNote: NotesModel(title: formTitle, description: formDescription));
 
     String msg;
 
@@ -222,6 +234,7 @@ class _MyAppDashState extends State<MyAppDash> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    */
   }
 
   ////updation function
@@ -232,10 +245,15 @@ class _MyAppDashState extends State<MyAppDash> {
     var updateFormDescription = updateDescriptionController.text.trim();
 
     // Update the note in the database
-    int check = await mainDB!.updateNotes(rowIndex: updateIndex, newNote: NotesModel(title: updateFormTitle, description: updateFormDescription));
+    await databaseController.notesUpdate(
+        rowindex: updateIndex,
+        notesModel: NotesModel(
+            title: updateFormTitle, description: updateFormDescription));
+
+    Get.snackbar("Update!" , " records has updated");
 
     // Prepare a message based on the success/failure of the update
-    String msg;
+    /* String msg;
     if (check < 0) {
       msg = "Note update failed";
     } else {
@@ -248,6 +266,6 @@ class _MyAppDashState extends State<MyAppDash> {
     if (context.mounted) {
       // Ensure context is still valid
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-    }
+    }*/
   }
 }
