@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:my_getx/Models/notesmodel.dart';
 import 'package:my_getx/data/local/db_helper.dart';
 
 void main() {
@@ -26,7 +27,7 @@ class _MyAppDashState extends State<MyAppDash> {
 
   TextEditingController updateTitleController = TextEditingController();
   TextEditingController updateDescriptionController = TextEditingController();
-  List<Map<String, dynamic>> allNotes = [];
+  List<NotesModel> allNotes = [];
 
   DBHelper? mainDB;
 
@@ -56,7 +57,7 @@ class _MyAppDashState extends State<MyAppDash> {
                   leading: Text.rich(
                     TextSpan(
                         text:
-                            "Sn:${allNotes[index][DBHelper.s_no].toString()}\n",
+                            "Sn:${allNotes[index].s_n!.toString()}\n",
                         children: [
                           TextSpan(text: "In:${index.toString()}"),
                         ]),
@@ -64,17 +65,17 @@ class _MyAppDashState extends State<MyAppDash> {
                   trailing: IconButton(
                       onPressed: () {
                         mainDB!.deleteNotes(
-                            rowIndex: allNotes[index][DBHelper.s_no]);
+                            rowIndex: allNotes[index].s_n!);
                         getInitialNotes();
                       },
                       icon: Icon(Icons.delete)),
-                  title: Text(allNotes[index][DBHelper.Columntitle]),
-                  subtitle: Text(allNotes[index][DBHelper.columndescription]),
+                  title: Text(allNotes[index].title),
+                  subtitle: Text(allNotes[index].description),
                   onLongPress: () {
                     updateTitleController.text =
-                        allNotes[index][DBHelper.Columntitle];
+                        allNotes[index].title;
                         updateDescriptionController.text =
-                        allNotes[index][DBHelper.columndescription];
+                        allNotes[index].description;
                     showModalBottomSheet(
                         context: context,
                         builder: (_) {
@@ -119,7 +120,7 @@ class _MyAppDashState extends State<MyAppDash> {
                                       onPressed: () {
                                         updateNotesInDB(
                                             updateIndex: allNotes[index]
-                                                [DBHelper.s_no]);
+                                                .s_n!);
                                         Navigator.pop(context);
                                       },
                                       child: Text("update")),
@@ -207,7 +208,7 @@ class _MyAppDashState extends State<MyAppDash> {
     var formTitle = titleController.text.toString();
     var formDescription = descriptionController.text.toString();
 
-    bool check = await mainDB!.addNote(title: formTitle, desc: formDescription);
+    bool check = await mainDB!.addNote(newNote: NotesModel(title: formTitle, description: formDescription));
 
     String msg;
 
@@ -231,10 +232,7 @@ class _MyAppDashState extends State<MyAppDash> {
     var updateFormDescription = updateDescriptionController.text.trim();
 
     // Update the note in the database
-    int check = await mainDB!.updateNotes(
-        rowIndex: updateIndex,
-        rowTitle: updateFormTitle,
-        rowDescription: updateFormDescription);
+    int check = await mainDB!.updateNotes(rowIndex: updateIndex, newNote: NotesModel(title: updateFormTitle, description: updateFormDescription));
 
     // Prepare a message based on the success/failure of the update
     String msg;
